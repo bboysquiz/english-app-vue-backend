@@ -13,7 +13,8 @@
       }
     ],
     "env": {
-      "PORT": "3000"
+      "PORT": "3000",
+      "CLIENT_URL": "https://english-app-front-6pxk53kat-nikitas-projects-d648fed6.vercel.app"
     }
   }
   
