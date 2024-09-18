@@ -3,7 +3,7 @@ const db = require('../db')
 class DictionaryController {
     async createPair(req, res) {
         const {word, translation} = req.body
-        const newPair = await db.query(`INSERT INTO dictionary (word, translation) values ($1, $2) RETURNING *`, [word, translation])
+        const newPair = await db.query(`INSERT INTO dictionary (word, translation, rating) values ($1, $2, $3) RETURNING *`, [word, translation, 0])
         res.json(newPair.rows[0])
     }
     async getDictionary(req, res) {
@@ -29,6 +29,11 @@ class DictionaryController {
         const word = await db.query(`SELECT * FROM dictionary where translation = $1`, [engWord])
         res.json(word.rows[0].word)
     }
+    async getWordRating(req, res) {
+        const id = req.params.id
+        const result = await db.query(`SELECT * FROM dictionary where id = $1`, [id])
+        res.json(result.rows[0].rating)
+    }
     async updatePair(req, res) {
         const {id, word, translation} = req.body
         const pair = await db.query(
@@ -37,24 +42,52 @@ class DictionaryController {
         )
         res.json(pair.rows[0])
     }
+    async editWordRating(req, res) {
+        const {id, rating, correctPoint, incorrectPoint} = req.body
+        const result = await db.query(
+            'UPDATE dictionary set rating = $1, correct_answer = $3, incorrect_answer = $4 where id = $2 RETURNING *',
+            [rating, id, correctPoint, incorrectPoint]
+        )
+        res.json(result.rows[0])
+    }
     async deletePair(req, res) {
         const id = req.params.id
         const pair = await db.query('DELETE FROM dictionary where id = $1', [id])
         res.json(pair.rows[0])
     }
     async getRandomPair(req, res) {
+        const excludeWords = req.query.exclude ? req.query.exclude.split(',') : [];
         try {
-            const randomPair = await db.query('SELECT * FROM dictionary ORDER BY RANDOM() LIMIT 1');
+            // Создаем строку запроса, зависящую от наличия исключаемых слов
+            let query = `
+                SELECT * FROM dictionary 
+                WHERE rating = (SELECT MIN(rating) FROM dictionary)
+                ORDER BY RANDOM() 
+                LIMIT 1
+            `;
+    
+            if (excludeWords.length > 0) {
+                const values = excludeWords.map((_, i) => `$${i + 1}`).join(',');
+                query = `
+                    SELECT * FROM dictionary 
+                    WHERE rating = (SELECT MIN(rating) FROM dictionary WHERE word NOT IN (${values}))
+                    AND word NOT IN (${values})
+                    ORDER BY RANDOM() 
+                    LIMIT 1
+                `;
+            }
+    
+            const randomPair = await db.query(query, excludeWords);
             if (randomPair.rows.length) {
                 res.json(randomPair.rows[0]);
             } else {
-                res.status(404).json({message: "No words found in the dictionary"});
+                res.status(404).json({ message: "No words found in the dictionary" });
             }
         } catch (error) {
             console.error('Ошибка запроса:', error);
-            res.status(500).json({message: "Server error"});
+            res.status(500).json({ message: "Server error" });
         }
-    }
+    }      
 }
 
 module.exports = new DictionaryController()

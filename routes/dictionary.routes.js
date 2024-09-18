@@ -9,7 +9,9 @@ router.get('/dictionary/random', dictionaryController.getRandomPair);
 router.get('/dictionary/:id', dictionaryController.getPair)
 router.get('/dictionary/translate/:rusWord', dictionaryController.getEngTranslate)
 router.get('/dictionary/word/:engWord', dictionaryController.getRusTranslate)
-router.put('/dictionary', dictionaryController.updatePair)
+router.get('/dictionary/rating/:id', dictionaryController.getWordRating)
+router.put('/dictionary/pair', dictionaryController.updatePair)
+router.put('/dictionary/rating', dictionaryController.editWordRating)
 router.delete('/dictionary/:id', dictionaryController.deletePair)
 
 
