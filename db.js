@@ -1,10 +1,9 @@
-const Pool = require('pg').Pool;
+const { Pool } = require('pg');
 const pool = new Pool({
-    user: "bboysquiz",
-    password: 'root',
-    host: 'localhost',
-    port: 5534,
-    database: "dictionarydb"
+    connectionString: process.env.POSTGRES_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 })
 
 module.exports = pool
