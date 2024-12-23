@@ -62,7 +62,14 @@ class DictionaryController {
             let query;
             let params = [];
 
-            if (excludeWords.length > 0) {
+            if (requestCounter % 15 === 0) {
+                // Раз в 15 запросов возвращаем абсолютно случайное слово
+                query = `
+                    SELECT * FROM dictionary
+                    ORDER BY RANDOM()
+                    LIMIT 1
+                `;
+            } else if (excludeWords.length > 0) {
                 // Если есть исключаемые слова, добавляем условие NOT IN
                 const placeholders = excludeWords.map((_, i) => `$${i + 1}`).join(',');
                 query = `
