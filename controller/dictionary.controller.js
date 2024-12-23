@@ -61,21 +61,11 @@ class DictionaryController {
             // Создаем строку запроса, зависящую от наличия исключаемых слов
             let query = `
                 SELECT * FROM dictionary 
-                WHERE rating = (SELECT MIN(rating) FROM dictionary)
+                WHERE rating = (SELECT MIN(rating) FROM dictionary WHERE word NOT IN (${excludeWords.map((_, i) => `$${i + 1}`).join(',')}))
+                AND word NOT IN (${excludeWords.map((_, i) => `$${i + 1}`).join(',')})
                 ORDER BY RANDOM() 
                 LIMIT 1
             `;
-    
-            if (excludeWords.length > 0) {
-                const values = excludeWords.map((_, i) => `$${i + 1}`).join(',');
-                query = `
-                    SELECT * FROM dictionary 
-                    WHERE rating = (SELECT MIN(rating) FROM dictionary WHERE word NOT IN (${values}))
-                    AND word NOT IN (${values})
-                    ORDER BY RANDOM() 
-                    LIMIT 1
-                `;
-            }
     
             const randomPair = await db.query(query, excludeWords);
             if (randomPair.rows.length) {
