@@ -58,22 +58,24 @@ class DictionaryController {
         res.json(pair.rows[0])
     }
     async getRandomPair(req, res) {
-        const excludeWords = req.query.exclude ? req.query.exclude.split(',') : [];
+        const excludeWords = typeof req.query.exclude === 'string' && req.query.exclude.trim() !== ''
+            ? req.query.exclude.split(',')
+            : [];
+        console.log('Exclude words:', excludeWords); // Логируем исключения
+    
         try {
-            requestCounter++; // Увеличиваем счётчик запросов
+            requestCounter++;
     
             let query;
             let params = [];
     
             if (requestCounter % 15 === 0) {
-                // Раз в 15 запросов возвращаем абсолютно случайное слово
                 query = `
                     SELECT * FROM dictionary
                     ORDER BY RANDOM()
                     LIMIT 1
                 `;
             } else if (excludeWords.length > 0) {
-                // Если есть исключаемые слова
                 const placeholders = excludeWords.map((_, i) => `$${i + 1}`).join(',');
                 query = `
                     SELECT * FROM dictionary
@@ -88,7 +90,6 @@ class DictionaryController {
                 `;
                 params = excludeWords;
             } else {
-                // Если нет исключаемых слов
                 query = `
                     SELECT * FROM dictionary
                     WHERE rating = (SELECT MIN(rating) FROM dictionary)
@@ -97,7 +98,8 @@ class DictionaryController {
                 `;
             }
     
-            // Выполняем запрос
+            console.log('SQL query:', query, 'Params:', params); // Логируем запрос
+    
             const randomPair = await db.query(query, params);
     
             if (randomPair.rows.length) {
@@ -109,7 +111,7 @@ class DictionaryController {
             console.error('Ошибка запроса:', error);
             res.status(500).json({ message: "Server error" });
         }
-    }
+    }    
 }
 
 module.exports = new DictionaryController()
