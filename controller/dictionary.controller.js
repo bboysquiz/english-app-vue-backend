@@ -1,5 +1,7 @@
 const db = require('../db')
 
+let requestCounter = 0;
+
 class DictionaryController {
     async createPair(req, res) {
         const { word, translation } = req.body
@@ -57,11 +59,12 @@ class DictionaryController {
     }
     async getRandomPair(req, res) {
         const excludeWords = req.query.exclude ? req.query.exclude.split(',') : [];
-
         try {
+            requestCounter++; // Увеличиваем счётчик запросов
+    
             let query;
             let params = [];
-
+    
             if (requestCounter % 15 === 0) {
                 // Раз в 15 запросов возвращаем абсолютно случайное слово
                 query = `
@@ -70,7 +73,7 @@ class DictionaryController {
                     LIMIT 1
                 `;
             } else if (excludeWords.length > 0) {
-                // Если есть исключаемые слова, добавляем условие NOT IN
+                // Если есть исключаемые слова
                 const placeholders = excludeWords.map((_, i) => `$${i + 1}`).join(',');
                 query = `
                     SELECT * FROM dictionary
@@ -85,7 +88,7 @@ class DictionaryController {
                 `;
                 params = excludeWords;
             } else {
-                // Если нет исключаемых слов, простой запрос
+                // Если нет исключаемых слов
                 query = `
                     SELECT * FROM dictionary
                     WHERE rating = (SELECT MIN(rating) FROM dictionary)
@@ -93,10 +96,10 @@ class DictionaryController {
                     LIMIT 1
                 `;
             }
-
+    
             // Выполняем запрос
             const randomPair = await db.query(query, params);
-
+    
             if (randomPair.rows.length) {
                 res.json(randomPair.rows[0]);
             } else {
