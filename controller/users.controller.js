@@ -86,8 +86,8 @@ class UsersController {
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
             const newUser = await db.query(
-                'INSERT INTO users (username, password, points, correct_words, incorrect_words) values ($1, $2, $3, $4) RETURNING *', 
-                [username, hashedPassword, 0, 0]
+                'INSERT INTO users (username, password, points, correct_words, incorrect_words) values ($1, $2, $3, $4, $5) RETURNING *', 
+                [username, hashedPassword, 0, 0, 0]
             );
                 res.json(newUser.rows[0])
         } catch(error) {
