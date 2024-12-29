@@ -1,4 +1,20 @@
 const db = require('../db')
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const SECRET_ACCESS_KEY = process.env.ACCESS_SECRET;
+const SECRET_REFRESH_KEY = process.env.REFRESH_SECRET;
+
+const generateAccessToken = (user) => {
+    // Создаём токен с коротким сроком действия (например, 15 минут)
+    return jwt.sign({ username: user.username }, SECRET_ACCESS_KEY, { expiresIn: '4h' });
+}
+
+const generateRefreshToken = (user) => {
+    // Создаём токен с длительным сроком действия (например, 30 дней)
+    return jwt.sign({ username: user.username }, SECRET_REFRESH_KEY, { expiresIn: '30d' });
+}
+
 
 class UsersController {
     
@@ -63,14 +79,159 @@ class UsersController {
             res.json(error)
         }
     }
-    // async updatePair(req, res) {
-    //     const {id, word, translation} = req.body
-    //     const pair = await db.query(
-    //         'UPDATE dictionary set word = $1, translation = $2 where id = $3 RETURNING *', 
-    //         [word, translation, id]
-    //     )
-    //     res.json(pair.rows[0])
-    // }
+    async createUser(req, res) {
+        try {
+            const {username, password} = req.body
+            const bcrypt = require('bcrypt');
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            const newUser = await db.query(
+                'INSERT INTO users (username, password, points, correct_words, incorrect_words) values ($1, $2, $3, $4) RETURNING *', 
+                [username, hashedPassword, 0, 0]
+            );
+                res.json(newUser.rows[0])
+        } catch(error) {
+            console.error(error)
+            throw error
+        }
+    }
+    async login(req, res) {
+        try {
+            const { username, password } = req.body;
+            const user = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+            if (user.rows.length === 0) {
+                return res.status(401).json({ success: false, message: 'Invalid username or password' });
+            }
+
+            const isPasswordMatch = await bcrypt.compare(password, user.rows[0].password);
+            if (!isPasswordMatch) {
+                return res.status(401).json({ success: false, message: 'Invalid username or password' });
+            }
+    
+            if (user.rows.length > 0) {
+                const accessToken = generateAccessToken(user.rows[0]);
+                const refreshToken = generateRefreshToken(user.rows[0]);
+
+                // Устанавливаем access токен в httpOnly cookie
+                res.cookie('accessToken', accessToken, {
+                    httpOnly: true,
+                    secure: true, // Используйте true, если работаете через HTTPS
+                    sameSite: 'strict',
+                });
+                // Отправляем refresh токен для сохранения в localStorage
+                res.json({
+                    success: true,
+                    message: 'Login successful',
+                    refreshToken,
+                });
+                await db.query('INSERT INTO refresh_tokens (token, username) VALUES ($1, $2)', [refreshToken, username]);
+            } else {
+                res.status(401).json({ success: false, message: 'Invalid username or password' });
+            }
+        } catch (error) {
+            res.json(error);
+        }
+    }
+    async refreshToken(req, res) {
+        try {
+            const { refreshToken } = req.body;
+    
+            if (!refreshToken) {
+                return res.status(401).json({ success: false, message: 'Refresh token required' });
+            }
+    
+            // Проверяем валидность refresh токена
+            jwt.verify(refreshToken, SECRET_REFRESH_KEY, async (err, user) => {
+                if (err) {
+                    return res.status(403).json({ success: false, message: 'Invalid refresh token' });
+                }
+            
+                const tokenExists = await db.query('SELECT * FROM refresh_tokens WHERE token = $1', [refreshToken]);
+                if (tokenExists.rows.length === 0) {
+                    return res.status(403).json({ success: false, message: 'Invalid refresh token' });
+                }
+            
+                const newAccessToken = generateAccessToken({ username: user.username });
+                res.cookie('accessToken', newAccessToken, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'strict',
+                });
+                res.json({ success: true, message: 'Access token refreshed' });
+            });            
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }    
+    async logout(req, res) {
+        try {
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict',
+            });
+    
+            res.json({ success: true, message: 'Logout successful' });
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+    async deleteUser(req, res) {
+        try {
+            const { username } = req.body;
+            const deletedUser = await db.query(
+                'DELETE FROM users WHERE username = $1 RETURNING *',
+                [username]
+            );
+    
+            if (deletedUser.rows.length > 0) {
+                res.json({ success: true, message: 'User deleted', user: deletedUser.rows[0] });
+            } else {
+                res.status(404).json({ success: false, message: 'User not found' });
+            }
+        } catch (error) {
+            res.json(error);
+        }
+    }
+    async updateUsername(req, res) {
+        try {
+            const { oldUsername, newUsername } = req.body;
+            const updatedUser = await db.query(
+                'UPDATE users SET username = $1 WHERE username = $2 RETURNING *',
+                [newUsername, oldUsername]
+            );
+    
+            if (updatedUser.rows.length > 0) {
+                res.json({ success: true, message: 'Username updated', user: updatedUser.rows[0] });
+            } else {
+                res.status(404).json({ success: false, message: 'User not found' });
+            }
+        } catch (error) {
+            res.json(error);
+        }
+    }
+    async updatePassword(req, res) {
+        try {
+            const { username, oldPassword, newPassword } = req.body;
+            const user = await db.query(
+                'SELECT * FROM users WHERE username = $1 AND password = $2',
+                [username, oldPassword]
+            );
+    
+            if (user.rows.length > 0) {
+                const updatedUser = await db.query(
+                    'UPDATE users SET password = $1 WHERE username = $2 RETURNING *',
+                    [newPassword, username]
+                );
+                res.json({ success: true, message: 'Password updated', user: updatedUser.rows[0] });
+            } else {
+                res.status(401).json({ success: false, message: 'Invalid username or password' });
+            }
+        } catch (error) {
+            res.json(error);
+        }
+    }
+    
 }
 
 module.exports = new UsersController()
