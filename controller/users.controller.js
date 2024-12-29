@@ -98,6 +98,7 @@ class UsersController {
     async login(req, res) {
         try {
             const { username, password } = req.body;
+            const bcrypt = require('bcrypt');
             const user = await db.query('SELECT * FROM users WHERE username = $1', [username]);
             if (user.rows.length === 0) {
                 return res.status(401).json({ success: false, message: 'Invalid username or password' });
@@ -108,14 +109,14 @@ class UsersController {
                 return res.status(401).json({ success: false, message: 'Invalid username or password' });
             }
     
-            if (user.rows.length > 0) {
+            
                 const accessToken = generateAccessToken(user.rows[0]);
                 const refreshToken = generateRefreshToken(user.rows[0]);
 
                 // Устанавливаем access токен в httpOnly cookie
                 res.cookie('accessToken', accessToken, {
                     httpOnly: true,
-                    secure: true, // Используйте true, если работаете через HTTPS
+                    secure: false, // Используйте true, если работаете через HTTPS
                     sameSite: 'strict',
                 });
                 // Отправляем refresh токен для сохранения в localStorage
@@ -125,9 +126,6 @@ class UsersController {
                     refreshToken,
                 });
                 await db.query('INSERT INTO refresh_tokens (token, username) VALUES ($1, $2)', [refreshToken, username]);
-            } else {
-                res.status(401).json({ success: false, message: 'Invalid username or password' });
-            }
         } catch (error) {
             res.json(error);
         }
@@ -154,7 +152,7 @@ class UsersController {
                 const newAccessToken = generateAccessToken({ username: user.username });
                 res.cookie('accessToken', newAccessToken, {
                     httpOnly: true,
-                    secure: true,
+                    secure: false,
                     sameSite: 'strict',
                 });
                 res.json({ success: true, message: 'Access token refreshed' });
@@ -167,7 +165,7 @@ class UsersController {
         try {
             res.clearCookie('accessToken', {
                 httpOnly: true,
-                secure: true,
+                secure: false,
                 sameSite: 'strict',
             });
     
