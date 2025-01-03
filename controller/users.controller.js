@@ -229,6 +229,32 @@ class UsersController {
             res.json(error);
         }
     }
+    async getCurrentUser(req, res) {
+        try {
+            // Используем `req.user`, который был добавлен в мидлваре `authenticateToken`
+            const user = await db.query(
+                'SELECT username, points, correct_words, incorrect_words FROM users WHERE username = $1',
+                [req.user.username]
+            );
+    
+            if (user.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+    
+            res.json({
+                success: true,
+                user: {
+                    username: user.rows[0].username,
+                    points: user.rows[0].points,
+                    correctWords: user.rows[0].correct_words,
+                    incorrectWords: user.rows[0].incorrect_words,
+                },
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'Server error', error });
+        }
+    }
+    
     
 }
 

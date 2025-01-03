@@ -16,6 +16,7 @@ router.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'You have access!', user: req.user });
 });
 router.post('/users', usersController.createUser);
+router.get('/users/me', authenticateToken, usersController.getCurrentUser);
 
 
 module.exports = router
