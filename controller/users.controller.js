@@ -41,7 +41,14 @@ class UsersController {
 
     async getCorrectWords(req, res) {
         try {
-            const correctWords = await db.query('SELECT correct_words FROM users')
+            const { username } = req.query; 
+            if (!username) {
+                return res.status(400).json({ success: false, message: 'Username is required' });
+            }
+            const correctWords = await db.query('SELECT correct_words FROM users WHERE username = $1', [username])
+            if (points.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
             res.json(correctWords.rows[0])
         }catch(error) {
             res.json(error)
@@ -49,7 +56,15 @@ class UsersController {
     }
     async getIncorrectWords(req, res) {
         try {
-            const incorrectWords = await db.query('SELECT incorrect_words FROM users')
+            const { username } = req.query;
+            
+            if (!username) {
+                return res.status(400).json({ success: false, message: 'Username is required' });
+            }
+            const incorrectWords = await db.query('SELECT incorrect_words FROM users WHERE username = $1', [username])
+            if (points.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
             res.json(incorrectWords.rows[0])
         }catch(error) {
             res.json(error)
