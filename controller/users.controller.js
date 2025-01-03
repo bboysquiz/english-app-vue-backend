@@ -20,12 +20,24 @@ class UsersController {
     
     async getPoints(req, res) {
         try {
-            const points = await db.query('SELECT points FROM users')
-            res.json(points.rows[0])
-        }catch(error) {
-            res.json(error)
+            const { username } = req.query; // Извлекаем имя пользователя из query параметров
+    
+            if (!username) {
+                return res.status(400).json({ success: false, message: 'Username is required' });
+            }
+    
+            const points = await db.query('SELECT points FROM users WHERE username = $1', [username]);
+    
+            if (points.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+    
+            res.json({ success: true, points: points.rows[0].points });
+        } catch (error) {
+            console.error('Error fetching points:', error);
+            res.status(500).json({ success: false, message: 'Internal server error' });
         }
-    }
+    }    
 
     async getCorrectWords(req, res) {
         try {
