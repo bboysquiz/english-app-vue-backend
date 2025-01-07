@@ -4,12 +4,13 @@ let requestCounter = 0;
 
 class DictionaryController {
     async createPair(req, res) {
-        const { word, translation } = req.body
-        const newPair = await db.query(`INSERT INTO dictionary (word, translation, rating) values ($1, $2, $3) RETURNING *`, [word, translation, 0])
+        const { userId, word, translation } = req.body
+        const newPair = await db.query(`INSERT INTO dictionary (word, translation, rating, userid) values ($1, $2, $3, $4) RETURNING *`, [word, translation, 0, userId])
         res.json(newPair.rows[0])
     }
     async getDictionary(req, res) {
-        const dictionary = await db.query('SELECT * FROM dictionary')
+        const { userId } = req.body
+        const dictionary = await db.query('SELECT * FROM dictionary where userid = $1', [userId])
         res.json(dictionary.rows)
     }
     async getCountPairs(req, res) {
@@ -37,10 +38,10 @@ class DictionaryController {
         res.json(result.rows[0].rating)
     }
     async updatePair(req, res) {
-        const { id, word, translation } = req.body
+        const { id, word, translation, userId } = req.body
         const pair = await db.query(
-            'UPDATE dictionary set word = $1, translation = $2 where id = $3 RETURNING *',
-            [word, translation, id]
+            'UPDATE dictionary set word = $1, translation = $2 where id = $3 AND userid = $4 RETURNING *',
+            [word, translation, id, userId]
         )
         res.json(pair.rows[0])
     }
@@ -53,8 +54,9 @@ class DictionaryController {
         res.json(result.rows[0])
     }
     async deletePair(req, res) {
-        const id = req.params.id
-        const pair = await db.query('DELETE FROM dictionary where id = $1', [id])
+        const { id, userId } = req.params
+        console.log(id, userId)
+        const pair = await db.query('DELETE FROM dictionary where id = $1 AND userid = $2', [id, userId])
         res.json(pair.rows[0])
     }
     async getRandomPair(req, res) {
