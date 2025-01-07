@@ -48,7 +48,7 @@ class UsersController {
             console.log(userId)
             const correctWords = await db.query('SELECT correct_words FROM users WHERE userid = $1', [userId])
             console.log(correctWords)
-            if (points.rows.length === 0) {
+            if (correctWords.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
             res.json({ success: true, correct_words: correctWords.rows[0].correct_words })
@@ -64,7 +64,7 @@ class UsersController {
                 return res.status(400).json({ success: false, message: 'userId is required' });
             }
             const incorrectWords = await db.query('SELECT incorrect_words FROM users WHERE userid = $1', [userId])
-            if (points.rows.length === 0) {
+            if (incorrectWords.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
             res.json({ success: true, incorrect_words: incorrectWords.rows[0].incorrect_words })
