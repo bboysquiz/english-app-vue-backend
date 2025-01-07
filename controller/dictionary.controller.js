@@ -61,17 +61,21 @@ class DictionaryController {
         const excludeWords = typeof req.query.exclude === 'string' && req.query.exclude.trim() !== ''
             ? req.query.exclude.split(',')
             : [];
-        console.log('Exclude words:', excludeWords); // Логируем исключения
+        const { userId } = req.query.userId; 
+        if (!userId) {
+            return res.status(400).json({ success: false, message: 'userId is required' });
+        }
     
         try {
             requestCounter++;
     
             let query;
-            let params = [];
+            let params = [userId];
     
             if (requestCounter % 15 === 0) {
                 query = `
                     SELECT * FROM dictionary
+                    WHERE userid = $1
                     ORDER BY RANDOM()
                     LIMIT 1
                 `;
@@ -79,20 +83,23 @@ class DictionaryController {
                 const placeholders = excludeWords.map((_, i) => `$${i + 1}`).join(',');
                 query = `
                     SELECT * FROM dictionary
-                    WHERE rating = (
+                    WHERE userid = $1
+                    AND rating = (
                         SELECT MIN(rating) 
-                        FROM dictionary 
-                        WHERE word NOT IN (${placeholders})
+                        FROM dictionary
+                        WHERE userid = $1 
+                        AND word NOT IN (${placeholders})
                     )
                     AND word NOT IN (${placeholders})
                     ORDER BY RANDOM()
                     LIMIT 1
                 `;
-                params = excludeWords;
+                params = [userId, ...excludeWords];
             } else {
                 query = `
                     SELECT * FROM dictionary
-                    WHERE rating = (SELECT MIN(rating) FROM dictionary)
+                    WHERE userid = $1
+                    AND rating = (SELECT MIN(rating) FROM dictionary WHERE userid = $1)
                     ORDER BY RANDOM()
                     LIMIT 1
                 `;
