@@ -62,6 +62,8 @@ class DictionaryController {
             ? req.query.exclude.split(',')
             : [];
         const { userId } = req.query.userId; 
+        console.log(userId)
+        console.log(req.query)
         if (!userId) {
             return res.status(400).json({ success: false, message: 'userId is required' });
         }
