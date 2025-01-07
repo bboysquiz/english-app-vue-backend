@@ -9,7 +9,7 @@ class DictionaryController {
         res.json(newPair.rows[0])
     }
     async getDictionary(req, res) {
-        const { userid } = req.body
+        const { userid } = req.query
         console.log(req)
         const dictionary = await db.query('SELECT * FROM dictionary where userid = $1', [userid])
         res.json(dictionary.rows)
