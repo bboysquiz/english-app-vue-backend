@@ -9,10 +9,26 @@ class DictionaryController {
         res.json(newPair.rows[0])
     }
     async getDictionary(req, res) {
-        const { userId } = req.query
-        console.log(req.query)
-        const dictionary = await db.query('SELECT * FROM dictionary where userid = $1', [userId])
-        res.json(dictionary.rows)
+        try {
+            const { userId } = req.query; // Убедитесь, что ключ совпадает с запросом (userId).
+            console.log('Query Params:', req.query);
+            console.log('Extracted userId:', userId);
+    
+            // Проверка на наличие userId
+            if (!userId) {
+                return res.status(400).json({ success: false, message: 'userId is required' });
+            }
+    
+            // Запрос к базе данных
+            const dictionary = await db.query('SELECT * FROM dictionary WHERE userid = $1', [userId]);
+            console.log('Dictionary Data:', dictionary.rows);
+    
+            // Отправка ответа клиенту
+            res.json({ success: true, data: dictionary.rows });
+        } catch (error) {
+            console.error('Error fetching dictionary:', error);
+            res.status(500).json({ success: false, message: 'Internal server error', error });
+        }
     }
     async getCountPairs(req, res) {
         const countPairs = await db.query('SELECT COUNT(*) FROM dictionary')
