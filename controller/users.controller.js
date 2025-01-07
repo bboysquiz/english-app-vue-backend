@@ -45,9 +45,7 @@ class UsersController {
             if (!userId) {
                 return res.status(400).json({ success: false, message: 'userId is required' });
             }
-            console.log(userId)
             const correctWords = await db.query('SELECT correct_words FROM users WHERE userid = $1', [userId])
-            console.log(correctWords)
             if (correctWords.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
