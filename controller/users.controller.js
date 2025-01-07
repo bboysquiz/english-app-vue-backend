@@ -49,7 +49,7 @@ class UsersController {
             if (points.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
-            res.json(correctWords.rows[0])
+            res.json({ success: true, correct_words: correctWords.rows[0].correct_words })
         }catch(error) {
             res.json(error)
         }
@@ -65,7 +65,7 @@ class UsersController {
             if (points.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
-            res.json(incorrectWords.rows[0])
+            res.json({ success: true, incorrect_words: incorrectWords.rows[0].incorrect_words })
         }catch(error) {
             res.json(error)
         }
