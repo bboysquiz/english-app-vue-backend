@@ -71,7 +71,7 @@ class DictionaryController {
         res.json(result.rows[0])
     }
     async deletePair(req, res) {
-        const { id, userId } = req.params
+        const { id, userId } = req.query
         console.log(id, userId)
         const pair = await db.query('DELETE FROM dictionary where id = $1 AND userid = $2', [id, userId])
         res.json(pair.rows[0])
