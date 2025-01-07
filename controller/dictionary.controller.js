@@ -9,9 +9,9 @@ class DictionaryController {
         res.json(newPair.rows[0])
     }
     async getDictionary(req, res) {
-        const { userId } = req.body
-        console.log(userId)
-        const dictionary = await db.query('SELECT * FROM dictionary where userid = $1', [userId])
+        const { userid } = req.body
+        console.log(req)
+        const dictionary = await db.query('SELECT * FROM dictionary where userid = $1', [userid])
         res.json(dictionary.rows)
     }
     async getCountPairs(req, res) {
