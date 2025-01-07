@@ -61,7 +61,7 @@ class DictionaryController {
         const excludeWords = typeof req.query.exclude === 'string' && req.query.exclude.trim() !== ''
             ? req.query.exclude.split(',')
             : [];
-        const { userId } = req.query.userId; 
+        const { userId } = req.query; 
         console.log(userId)
         console.log(req.query)
         if (!userId) {
