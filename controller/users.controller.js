@@ -20,13 +20,13 @@ class UsersController {
     
     async getPoints(req, res) {
         try {
-            const { username } = req.query; // Извлекаем имя пользователя из query параметров
+            const { userId } = req.query; // Извлекаем имя пользователя из query параметров
     
-            if (!username) {
-                return res.status(400).json({ success: false, message: 'Username is required' });
+            if (!userId) {
+                return res.status(400).json({ success: false, message: 'userId is required' });
             }
     
-            const points = await db.query('SELECT points FROM users WHERE username = $1', [username]);
+            const points = await db.query('SELECT points FROM users WHERE userid = $1', [userId]);
     
             if (points.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
@@ -41,11 +41,11 @@ class UsersController {
 
     async getCorrectWords(req, res) {
         try {
-            const { username } = req.query; 
-            if (!username) {
-                return res.status(400).json({ success: false, message: 'Username is required' });
+            const { userId } = req.query; 
+            if (!userId) {
+                return res.status(400).json({ success: false, message: 'userId is required' });
             }
-            const correctWords = await db.query('SELECT correct_words FROM users WHERE username = $1', [username])
+            const correctWords = await db.query('SELECT correct_words FROM users WHERE userid = $1', [userId])
             if (points.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
@@ -56,12 +56,12 @@ class UsersController {
     }
     async getIncorrectWords(req, res) {
         try {
-            const { username } = req.query;
+            const { userId } = req.query;
             
-            if (!username) {
-                return res.status(400).json({ success: false, message: 'Username is required' });
+            if (!userId) {
+                return res.status(400).json({ success: false, message: 'userId is required' });
             }
-            const incorrectWords = await db.query('SELECT incorrect_words FROM users WHERE username = $1', [username])
+            const incorrectWords = await db.query('SELECT incorrect_words FROM users WHERE userid = $1', [userId])
             if (points.rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
@@ -72,10 +72,10 @@ class UsersController {
     }
     async editPoints(req, res) {
         try {
-            const {username, points} = req.body
+            const {userId, points} = req.body
             const userPoints = await db.query(
-                'UPDATE users set points = $1 where username = $2 RETURNING *',
-                [points, username]
+                'UPDATE users set points = $1 where userid = $2 RETURNING *',
+                [points, userId]
             )
             res.json(userPoints.rows[0].points)
         }catch(error) {
@@ -84,10 +84,10 @@ class UsersController {
     }
     async editCorrectWords(req, res) {
         try {
-            const {username, correctWords} = req.body
+            const {userId, correctWords} = req.body
             const userCorrectWords = await db.query(
-                'UPDATE users set correct_words = $1 where username = $2 RETURNING *',
-                [correctWords, username]
+                'UPDATE users set correct_words = $1 where userid = $2 RETURNING *',
+                [correctWords, userId]
             )
             res.json(userCorrectWords.rows[0].correct_words)
         }catch(error) {
@@ -96,10 +96,10 @@ class UsersController {
     }
     async editIncorrectWords(req, res) {
         try {
-            const {username, incorrectWords} = req.body
+            const {userId, incorrectWords} = req.body
             const userIncorrectWords = await db.query(
-                'UPDATE users set incorrect_words = $1 where username = $2 RETURNING *',
-                [incorrectWords, username]
+                'UPDATE users set incorrect_words = $1 where userid = $2 RETURNING *',
+                [incorrectWords, userId]
             )
             res.json(userIncorrectWords.rows[0].incorrect_words)
         }catch(error) {
@@ -260,7 +260,7 @@ class UsersController {
         try {
             // Используем `req.user`, который был добавлен в мидлваре `authenticateToken`
             const user = await db.query(
-                'SELECT username, points, correct_words, incorrect_words FROM users WHERE username = $1',
+                'SELECT userid, username, points, correct_words, incorrect_words FROM users WHERE username = $1',
                 [req.user.username]
             );
     
@@ -271,6 +271,7 @@ class UsersController {
             res.json({
                 success: true,
                 user: {
+                    userId: user.rows[0].userid,
                     username: user.rows[0].username,
                     points: user.rows[0].points,
                     correctWords: user.rows[0].correct_words,
