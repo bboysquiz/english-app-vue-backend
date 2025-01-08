@@ -11,8 +11,6 @@ class DictionaryController {
     async getDictionary(req, res) {
         try {
             const { userId } = req.query; // Убедитесь, что ключ совпадает с запросом (userId).
-            console.log('Query Params:', req.query);
-            console.log('Extracted userId:', userId);
     
             // Проверка на наличие userId
             if (!userId) {
@@ -21,7 +19,6 @@ class DictionaryController {
     
             // Запрос к базе данных
             const dictionary = await db.query('SELECT * FROM dictionary WHERE userid = $1', [userId]);
-            console.log('Dictionary Data:', dictionary.rows);
     
             // Отправка ответа клиенту
             res.json({ success: true, data: dictionary.rows });
@@ -82,8 +79,6 @@ class DictionaryController {
             ? req.query.exclude.split(',')
             : [];
         const { userId } = req.query; 
-        console.log(userId)
-        console.log(req.query)
         if (!userId) {
             return res.status(400).json({ success: false, message: 'userId is required' });
         }
@@ -126,8 +121,6 @@ class DictionaryController {
                     LIMIT 1
                 `;
             }
-    
-            console.log('SQL query:', query, 'Params:', params); // Логируем запрос
     
             const randomPair = await db.query(query, params);
     

@@ -9,7 +9,7 @@ const port = 3000;
 
 const allowedOrigins = [
     'http://127.0.0.1:5173', // Local frontend for development
-    'https://comforting-heliotrope-d9d869.netlify.app/' // Production frontend
+    'https://comforting-heliotrope-d9d869.netlify.app' // Production frontend
 ];
 
 app.use(cors({
