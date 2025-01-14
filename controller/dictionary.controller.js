@@ -76,7 +76,7 @@ class DictionaryController {
     }
     async getRandomPair(req, res) {
         const excludeWords = typeof req.query.exclude === 'string' && req.query.exclude.trim() !== ''
-            ? req.query.exclude.split(',')
+            ? req.query.exclude.split(',').map(word => word.trim())
             : [];
         const { userId } = req.query; 
         if (!userId) {
@@ -97,7 +97,7 @@ class DictionaryController {
                     LIMIT 1
                 `;
             } else if (excludeWords.length > 0) {
-                const placeholders = excludeWords.map((_, i) => `$${i + 1}`).join(',');
+                const placeholders = excludeWords.map((_, i) => `$${i + 2}`).join(',');
                 query = `
                     SELECT * FROM dictionary
                     WHERE userid = $1
@@ -105,9 +105,9 @@ class DictionaryController {
                         SELECT MIN(rating) 
                         FROM dictionary
                         WHERE userid = $1 
-                        AND word NOT IN (${placeholders})
+                        AND word NOT IN (${placeholders}) -- убрано приведение к ::text[]
                     )
-                    AND word NOT IN (${placeholders})
+                    AND word NOT IN (${placeholders}) -- убрано приведение к ::text[]
                     ORDER BY RANDOM()
                     LIMIT 1
                 `;
@@ -122,6 +122,8 @@ class DictionaryController {
                 `;
             }
     
+            console.log('Query:', query, 'Params:', params);
+    
             const randomPair = await db.query(query, params);
     
             if (randomPair.rows.length) {
@@ -133,7 +135,7 @@ class DictionaryController {
             console.error('Ошибка запроса:', error);
             res.status(500).json({ message: "Server error" });
         }
-    }    
+    }       
 }
 
 module.exports = new DictionaryController()
