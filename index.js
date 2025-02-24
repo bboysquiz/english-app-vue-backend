@@ -8,7 +8,7 @@ const usersRouter = require('./routes/users.routes')
 const port = 3000;
 
 const allowedOrigins = [
-    'http://127.0.0.1:5173', // Local frontend for development
+    'http://localhost:5173', // Local frontend for development
     'https://comforting-heliotrope-d9d869.netlify.app' // Production frontend
 ];
 
