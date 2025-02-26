@@ -201,61 +201,6 @@ class UsersController {
             res.status(500).json(error);
         }
     }
-    async deleteUser(req, res) {
-        try {
-            const { username } = req.body;
-            const deletedUser = await db.query(
-                'DELETE FROM users WHERE username = $1 RETURNING *',
-                [username]
-            );
-    
-            if (deletedUser.rows.length > 0) {
-                res.json({ success: true, message: 'User deleted', user: deletedUser.rows[0] });
-            } else {
-                res.status(404).json({ success: false, message: 'User not found' });
-            }
-        } catch (error) {
-            res.json(error);
-        }
-    }
-    async updateUsername(req, res) {
-        try {
-            const { oldUsername, newUsername } = req.body;
-            const updatedUser = await db.query(
-                'UPDATE users SET username = $1 WHERE username = $2 RETURNING *',
-                [newUsername, oldUsername]
-            );
-    
-            if (updatedUser.rows.length > 0) {
-                res.json({ success: true, message: 'Username updated', user: updatedUser.rows[0] });
-            } else {
-                res.status(404).json({ success: false, message: 'User not found' });
-            }
-        } catch (error) {
-            res.json(error);
-        }
-    }
-    async updatePassword(req, res) {
-        try {
-            const { username, oldPassword, newPassword } = req.body;
-            const user = await db.query(
-                'SELECT * FROM users WHERE username = $1 AND password = $2',
-                [username, oldPassword]
-            );
-    
-            if (user.rows.length > 0) {
-                const updatedUser = await db.query(
-                    'UPDATE users SET password = $1 WHERE username = $2 RETURNING *',
-                    [newPassword, username]
-                );
-                res.json({ success: true, message: 'Password updated', user: updatedUser.rows[0] });
-            } else {
-                res.status(401).json({ success: false, message: 'Invalid username or password' });
-            }
-        } catch (error) {
-            res.json(error);
-        }
-    }
     async getCurrentUser(req, res) {
         try {
             // Используем `req.user`, который был добавлен в мидлваре `authenticateToken`
