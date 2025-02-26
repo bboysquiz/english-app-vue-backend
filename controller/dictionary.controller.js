@@ -108,7 +108,7 @@ class DictionaryController {
             if (requestCounter % 15 === 0) {
                 // Каждый 15-й запрос: выбираем случайное слово без учета рейтинга
                 query = `
-                    SELECT d.*, ds.rating, ds.correct_answer, ds.incorrect_answer
+                    SELECT d.*, ds.rating, ds.correct_answers, ds.incorrect_answers
                     FROM dictionary d
                     JOIN dictionary_stats ds ON ds.dictionary_id = d.id
                     WHERE d.userid = $1
@@ -127,7 +127,7 @@ class DictionaryController {
                 const placeholders2 = excludeWords.map((_, i) => `$${i + 4 + excludeWords.length}`).join(',');
     
                 query = `
-                    SELECT d.*, ds.rating, ds.correct_answer, ds.incorrect_answer
+                    SELECT d.*, ds.rating, ds.correct_answers, ds.incorrect_answers
                     FROM dictionary d
                     JOIN dictionary_stats ds ON ds.dictionary_id = d.id
                     WHERE d.userid = $1
@@ -152,7 +152,7 @@ class DictionaryController {
             } else {
                 // Стандартный запрос: выбираем слово с минимальным рейтингом
                 query = `
-                    SELECT d.*, ds.rating, ds.correct_answer, ds.incorrect_answer
+                    SELECT d.*, ds.rating, ds.correct_answers, ds.incorrect_answers
                     FROM dictionary d
                     JOIN dictionary_stats ds ON ds.dictionary_id = d.id
                     WHERE d.userid = $1
